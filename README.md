@@ -1,2 +1,2 @@
 # permitHackathon
-Scripts for permit data hackathon
+Scripts for January, 2016 permit data hackathon
