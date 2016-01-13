@@ -144,7 +144,9 @@ def main(input_file, keyword, es):
             clusts = filter(lambda x: x.cluster!=-1, clusts)
             if len(clusts) is not 0:
                 cid = str(uuid.uuid4())
+                first = None
                 for c in clusts:
+                    first = c
                     c.c_id = cid
                     c.write_to_es(es, 'hackathon_records', 'post')
                 body = {
@@ -154,7 +156,7 @@ def main(input_file, keyword, es):
                     "num_posts":len(clusts),
                     "location":{
                         "type":"point",
-                        "coordinates":[]
+                        "coordinates":[first.lon, first.lat]
                     }
                 }
                 es.index(index='hackathon_clusts', doc_type='post', id=cid, body=json.dumps(body))
