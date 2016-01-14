@@ -145,15 +145,34 @@ def main(input_file, keyword, es):
             if len(clusts) is not 0:
                 cid = str(uuid.uuid4())
                 first = None
+                b_first = True
+                minVal = 99999999
+                maxVal = 0
+                minDate = datetime.date(3000, 1, 1)
+                maxDate = datetime.date(1999, 1, 1)
                 for c in clusts:
-                    first = c
+                    if b_first==True:
+                        b_first=False
+                        first = c
                     c.c_id = cid
+                    if c.value < minVal:
+                        minVal = c.value
+                    if c.value > maxVal:
+                        maxVal = c.value
+                    if c.apDt < minDate:
+                        minDate = c.apDt
+                    if c.apDt > maxDate:
+                        maxDate = c.apDt
+
                     c.write_to_es(es, 'hackathon_records', 'post')
                 body = {
                     "tag":keyword,
                     "post_date":k,
-                    #"indexed_date":datetime_to_es_format(datetime.datetime.now()),
+                    "min_application_date":datetime_to_es_format(minDate),
+                    "max_application_date":datetime_to_es_format(maxDate),
                     "num_posts":len(clusts),
+                    "min_val":minVal,
+                    "max_val":maxVal,
                     "location":{
                         "type":"point",
                         "coordinates":[first.lon, first.lat]
