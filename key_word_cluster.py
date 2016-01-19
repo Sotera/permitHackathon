@@ -49,16 +49,16 @@ def assign_to_cluster(recordList, epsilon, n_min):
         recordList[ind].cluster = db.labels_[ind]
 
 class ScoreRecord:
-    def __init__(self, record, uid, keyword):
+    def __init__(self, record, uid, keyword, cType):
         lRec = record.lower().split("\t")
         self.id = uid
-        self.type = lRec[0]
+        #self.type = lRec[0]
         self.address = lRec[1]
         self.desc = lRec[2]
         self.category = lRec[3]
         self.action = lRec[4]
         self.work = lRec[5]
-        self.value = lRec[6]
+        self.value = float(lRec[6])
         self.name = lRec[7]
         self.apDt = None
         if lRec[8] != '':
@@ -73,7 +73,13 @@ class ScoreRecord:
         self.lon = float(lRec[13])
         self.cluster = -1
         self.c_id = None
-        self.hasKeyword = word_in_desc(self.action, keyword)
+        self.hasKeyword = False
+        if cType==0:
+            self.hasKeyword = word_in_desc(self.action, keyword)
+        elif cType==1:
+            self.hasKeyword = word_in_desc(self.category, keyword)
+        elif cType==2:
+            self.hasKeyword = word_in_desc(self.contractor, keyword)
         self.apQY = None
         if self.apDt is not None:
             dt = self.apDt
@@ -116,7 +122,7 @@ class ScoreBin:
         }
 
 
-def main(input_file, keyword, es):
+def main(input_file, keyword, es, cType):
     d0 = open(input_file, 'r')
     j = 0
     err = set()
@@ -125,7 +131,8 @@ def main(input_file, keyword, es):
     for line in d0:
         try:
             j = j+1
-            rec = ScoreRecord(line, id_gen.get_index(), keyword)
+            rec = ScoreRecord(line, id_gen.get_index(), keyword, cType)
+            print rec.contractor
             k = str(rec.apQY)
             if k in quarter_dict.keys():
                 quarter_dict[k].add_record(rec)
@@ -189,6 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("keyword", help="Keyword to perform clustering on")
     parser.add_argument("-epsilon", help="Fit epsilon, default 0.0001", type=float, default=0.001)
     parser.add_argument("-es_url", help="Elasticsearch url, default=http://localhost:9200", default=None)
+    parser.add_argument("-cType", help="Type of clustering: 0 = Action (Default), 1 = category, 2 = contractor", type=int, default=0)
     args = parser.parse_args()
 
     es = None
@@ -197,4 +205,4 @@ if __name__ == "__main__":
     else:
         es = elasticsearch.Elasticsearch([args.es_url])
 
-    main(args.input_file, args.keyword, es)
+    main(args.input_file, args.keyword, es, args.cType)
